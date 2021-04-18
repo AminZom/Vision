@@ -106,7 +106,7 @@ class Demo(QtWidgets.QWidget):
         self.viewerLayout.addWidget(self.viewer)
         atexit.register(self.exit_handler)
 
-        self.getFeedThread = threading.Thread(target=self.getFeed, args=())
+        self.getFeedThread = threading.Thread(target=self.getFeed)
         
         shadow = QGraphicsDropShadowEffect()  
         shadow.setBlurRadius(-5)
@@ -119,7 +119,7 @@ class Demo(QtWidgets.QWidget):
 
         self.startBtn.clicked.connect(self.uploadPic)
         self.capImgBtn.clicked.connect(self.captureImage)
-        self.connectCamBtn.clicked.connect(self.getFeed)
+        self.connectCamBtn.clicked.connect(self.startGetFeedThread)
 
         self.label1 = QLabel("Crazing:")
         self.label1.setStyleSheet("color: white; font-size: 18px; font-family: 'Garamond'; font-weight: bold")
@@ -276,6 +276,7 @@ class Demo(QtWidgets.QWidget):
     def getFeed(self):
         if(camera == None):
             ctypes.windll.user32.MessageBoxW(0, u"No camera detected!", u"Error", 0)
+            self.getFeedThread = threading.Thread(target=self.getFeed)
             return
 
         self.hintLabel.setVisible(True)
@@ -328,7 +329,9 @@ class Demo(QtWidgets.QWidget):
                 break
 
     def startGetFeedThread(self, text):
-        self.getFeedThread.start()
+        print(self.getFeedThread.is_alive())
+        if(not self.getFeedThread.is_alive()):
+            self.getFeedThread.start()
 
     def exit_handler(self):
         print("ENDING")
