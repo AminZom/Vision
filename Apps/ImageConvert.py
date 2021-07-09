@@ -6,10 +6,12 @@ Created on 2017-10-26
 @author: 
 '''
 from ctypes import *
+import ctypes
+import os
 
 # 加载ImageConvert库
 # 32bit
-# ImageConvertdll = OleDLL("./dll/x86/ImageConvert.dll")
+#ImageConvertdll = OleDLL("./dll/x86/ImageConvert.dll")
 # 64bit
 ImageConvertdll = OleDLL("./dll/x64/ImageConvert.dll")
 

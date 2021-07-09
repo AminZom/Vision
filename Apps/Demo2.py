@@ -5,8 +5,10 @@ Created on 2017-10-25
 
 @author: 
 '''
-from ImageConvert import *
+
+
 from MVSDK import *
+from ImageConvert import *
 import struct
 import time
 import datetime
