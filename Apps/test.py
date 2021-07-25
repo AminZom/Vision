@@ -15,11 +15,13 @@ import cv2
 import gc
 import atexit
 import ctypes
+import time
 
 #preds = getPredictions()
 camera = None
 streamSource = None
 isGrab = True
+demo = None
 
 class PhotoViewer(QtWidgets.QGraphicsView):
     photoClicked = QtCore.pyqtSignal(QtCore.QPoint)
@@ -95,67 +97,22 @@ class PhotoViewer(QtWidgets.QGraphicsView):
         super(PhotoViewer, self).mousePressEvent(event)
 
 class WorkerThread(QThread):
+    grabOneFrame = pyqtSignal()
     def run(self):
-        global isGrab
-        isGrab = True
-        for i in range(10):
-            if(isGrab == False):
-                print("breaking")
-                break
-            print(i)
-            time.sleep(1)
-        # if(camera == None):
-        #     ctypes.windll.user32.MessageBoxW(0, u"No camera detected!", u"Error", 0)
-        #     return
-
-        # self.hintLabel.setVisible(True)
         # global isGrab
         # isGrab = True
-        # while isGrab and self.isVisible():
-        #     frame = pointer(GENICAM_Frame())
-        #     nRet = streamSource.contents.getFrame(streamSource, byref(frame), c_uint(1000))
-        #     if ( nRet != 0 ):
-        #         print("getFrame fail! Timeout:[1000]ms")
-        #         streamSource.contents.release(streamSource)   
-        #         return -1 
-        #     #else:
-        #         #print("getFrame success BlockId = [" + str(frame.contents.getBlockId(frame)) + "], get frame time: " + str(datetime.datetime.now()))
-            
-        #     nRet = frame.contents.valid(frame)
-        #     if ( nRet != 0 ):
-        #         print("frame is invalid!")
-        #         frame.contents.release(frame)
-        #         streamSource.contents.release(streamSource)
-        #         return -1 
-
-        #     imageParams = IMGCNV_SOpenParam()
-        #     imageParams.dataSize    = frame.contents.getImageSize(frame)
-        #     imageParams.height      = frame.contents.getImageHeight(frame)
-        #     imageParams.width       = frame.contents.getImageWidth(frame)
-        #     imageParams.paddingX    = frame.contents.getImagePaddingX(frame)
-        #     imageParams.paddingY    = frame.contents.getImagePaddingY(frame)
-        #     imageParams.pixelForamt = frame.contents.getImagePixelFormat(frame)
-
-        #     imageBuff = frame.contents.getImage(frame)
-        #     userBuff = c_buffer(b'\0', imageParams.dataSize)
-        #     memmove(userBuff, c_char_p(imageBuff), imageParams.dataSize)
-
-        #     frame.contents.release(frame)
-
-        #     grayByteArray = bytearray(userBuff)
-        #     cvImage = np.array(grayByteArray).reshape(imageParams.height, imageParams.width)
-        #     qImg = QImage(cvImage.data, imageParams.height, imageParams.width, 1, QImage.Format_Mono)
-        #     img = Image.fromarray(np.uint8(cvImage))
-        #     imgPixmap = QtGui.QPixmap.fromImage(ImageQt(img))
-
-        #     #cv2.imshow('myWindow', qImg)
-        #     self.viewer.setPhoto(imgPixmap)
-        #     #gc.collect()
-        #     time.sleep(0.01)
-
-        #     if (cv2.waitKey(1) >= 0):
-        #         isGrab = False
+        # for i in range(10):
+        #     if(isGrab == False):
+        #         print("breaking")
         #         break
+        #     print(i)
+        #     time.sleep(1)
+        global isGrab
+        isGrab = True
+        while isGrab:
+            self.grabOneFrame.emit()
+            time.sleep(0.2)
+        
 
 class Demo(QtWidgets.QWidget):
     def __init__(self):
@@ -341,6 +298,7 @@ class Demo(QtWidgets.QWidget):
         self.worker = WorkerThread()
         self.worker.start()
         self.worker.finished.connect(self.get_feed_finished)
+        self.worker.grabOneFrame.connect(self.grab_one_frame)
 
     def stopFeed(self):
         print("Stopping thread.")
@@ -351,6 +309,51 @@ class Demo(QtWidgets.QWidget):
         print("Thread finished!")
         self.disconnectCamBtn.setVisible(False)
         self.connectCamBtn.setVisible(True)
+
+    def grab_one_frame(self):
+        if(camera == None):
+            ctypes.windll.user32.MessageBoxW(0, u"No camera detected!", u"Error", 0)
+            return
+
+        self.hintLabel.setVisible(True)
+        
+        frame = pointer(GENICAM_Frame())
+        nRet = streamSource.contents.getFrame(streamSource, byref(frame), c_uint(1000))
+        if ( nRet != 0 ):
+            print("getFrame fail! Timeout:[1000]ms")
+            streamSource.contents.release(streamSource)   
+            return -1 
+        #else:
+            #print("getFrame success BlockId = [" + str(frame.contents.getBlockId(frame)) + "], get frame time: " + str(datetime.datetime.now()))
+        
+        nRet = frame.contents.valid(frame)
+        if ( nRet != 0 ):
+            print("frame is invalid!")
+            frame.contents.release(frame)
+            streamSource.contents.release(streamSource)
+            return -1 
+
+        imageParams = IMGCNV_SOpenParam()
+        imageParams.dataSize    = frame.contents.getImageSize(frame)
+        imageParams.height      = frame.contents.getImageHeight(frame)
+        imageParams.width       = frame.contents.getImageWidth(frame)
+        imageParams.paddingX    = frame.contents.getImagePaddingX(frame)
+        imageParams.paddingY    = frame.contents.getImagePaddingY(frame)
+        imageParams.pixelForamt = frame.contents.getImagePixelFormat(frame)
+
+        imageBuff = frame.contents.getImage(frame)
+        userBuff = c_buffer(b'\0', imageParams.dataSize)
+        memmove(userBuff, c_char_p(imageBuff), imageParams.dataSize)
+
+        frame.contents.release(frame)
+
+        grayByteArray = bytearray(userBuff)
+        cvImage = np.array(grayByteArray, dtype=np.uint8).reshape(imageParams.height, imageParams.width)
+        #qImg = QImage(cvImage.data, imageParams.height, imageParams.width, 1, QImage.Format_Mono)
+        img = Image.fromarray(cvImage)
+        imgPixmap = QtGui.QPixmap.fromImage(ImageQt(img))
+
+        self.viewer.setPhoto(imgPixmap)
 
     def exit_handler(self):
         print("ENDING")
