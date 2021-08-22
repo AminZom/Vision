@@ -6,6 +6,7 @@ Created on 2017-10-18
 @author: 
 '''
 from ctypes import *
+import os
 
 #定义枚举类型
 def enum(**enums):
@@ -15,6 +16,7 @@ def enum(**enums):
 # 32bit
 # MVSDKdll = OleDLL("./dll/x86/MVSDKmd.dll")
 # 64bit
+
 MVSDKdll = OleDLL("./dll/x64/MVSDKmd.dll")
 
 #SDK.h => define 宏定义

@@ -5,7 +5,6 @@ Created on 2017-10-25
 
 @author: 
 '''
-
 from ImageConvert import *
 from MVSDK import *
 import struct

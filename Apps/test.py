@@ -13,14 +13,15 @@ import sys
 import numpy as np
 import cv2
 import gc
-import threading
 import atexit
 import ctypes
+import time
 
 #preds = getPredictions()
 camera = None
 streamSource = None
 isGrab = True
+demo = None
 
 class PhotoViewer(QtWidgets.QGraphicsView):
     photoClicked = QtCore.pyqtSignal(QtCore.QPoint)
@@ -95,6 +96,16 @@ class PhotoViewer(QtWidgets.QGraphicsView):
             self.photoClicked.emit(self.mapToScene(event.pos()).toPoint())
         super(PhotoViewer, self).mousePressEvent(event)
 
+class WorkerThread(QThread):
+    grabOneFrame = pyqtSignal()
+    def run(self):
+        global isGrab
+        isGrab = True
+        while isGrab:
+            self.grabOneFrame.emit()
+            time.sleep(0.2)
+        
+
 class Demo(QtWidgets.QWidget):
     def __init__(self):
         super(Demo, self).__init__()
@@ -105,8 +116,6 @@ class Demo(QtWidgets.QWidget):
         self.viewer.photoClicked.connect(self.photoClicked)
         self.viewerLayout.addWidget(self.viewer)
         atexit.register(self.exit_handler)
-
-        self.getFeedThread = threading.Thread(target=self.getFeed, args=())
         
         shadow = QGraphicsDropShadowEffect()  
         shadow.setBlurRadius(-5)
@@ -120,6 +129,8 @@ class Demo(QtWidgets.QWidget):
         self.startBtn.clicked.connect(self.uploadPic)
         self.capImgBtn.clicked.connect(self.captureImage)
         self.connectCamBtn.clicked.connect(self.getFeed)
+        self.disconnectCamBtn.clicked.connect(self.stopFeed)
+        self.disconnectCamBtn.setVisible(False)
 
         self.label1 = QLabel("Crazing:")
         self.label1.setStyleSheet("color: white; font-size: 18px; font-family: 'Garamond'; font-weight: bold")
@@ -274,61 +285,67 @@ class Demo(QtWidgets.QWidget):
         return 0
 
     def getFeed(self):
+        self.connectCamBtn.setVisible(False)
+        self.disconnectCamBtn.setVisible(True)
+        self.worker = WorkerThread()
+        self.worker.start()
+        self.worker.finished.connect(self.get_feed_finished)
+        self.worker.grabOneFrame.connect(self.grab_one_frame)
+
+    def stopFeed(self):
+        print("Stopping thread.")
+        global isGrab
+        isGrab = False
+
+    def get_feed_finished(self):
+        print("Thread finished!")
+        self.disconnectCamBtn.setVisible(False)
+        self.connectCamBtn.setVisible(True)
+
+    def grab_one_frame(self):
         if(camera == None):
             ctypes.windll.user32.MessageBoxW(0, u"No camera detected!", u"Error", 0)
             return
 
         self.hintLabel.setVisible(True)
-        global isGrab
-        isGrab = True
-        while isGrab and self.isVisible():
-            frame = pointer(GENICAM_Frame())
-            nRet = streamSource.contents.getFrame(streamSource, byref(frame), c_uint(1000))
-            if ( nRet != 0 ):
-                print("getFrame fail! Timeout:[1000]ms")
-                streamSource.contents.release(streamSource)   
-                return -1 
-            #else:
-                #print("getFrame success BlockId = [" + str(frame.contents.getBlockId(frame)) + "], get frame time: " + str(datetime.datetime.now()))
-            
-            nRet = frame.contents.valid(frame)
-            if ( nRet != 0 ):
-                print("frame is invalid!")
-                frame.contents.release(frame)
-                streamSource.contents.release(streamSource)
-                return -1 
-
-            imageParams = IMGCNV_SOpenParam()
-            imageParams.dataSize    = frame.contents.getImageSize(frame)
-            imageParams.height      = frame.contents.getImageHeight(frame)
-            imageParams.width       = frame.contents.getImageWidth(frame)
-            imageParams.paddingX    = frame.contents.getImagePaddingX(frame)
-            imageParams.paddingY    = frame.contents.getImagePaddingY(frame)
-            imageParams.pixelForamt = frame.contents.getImagePixelFormat(frame)
-
-            imageBuff = frame.contents.getImage(frame)
-            userBuff = c_buffer(b'\0', imageParams.dataSize)
-            memmove(userBuff, c_char_p(imageBuff), imageParams.dataSize)
-
+        
+        frame = pointer(GENICAM_Frame())
+        nRet = streamSource.contents.getFrame(streamSource, byref(frame), c_uint(1000))
+        if ( nRet != 0 ):
+            print("getFrame fail! Timeout:[1000]ms")
+            streamSource.contents.release(streamSource)   
+            return -1 
+        #else:
+            #print("getFrame success BlockId = [" + str(frame.contents.getBlockId(frame)) + "], get frame time: " + str(datetime.datetime.now()))
+        
+        nRet = frame.contents.valid(frame)
+        if ( nRet != 0 ):
+            print("frame is invalid!")
             frame.contents.release(frame)
+            streamSource.contents.release(streamSource)
+            return -1 
 
-            grayByteArray = bytearray(userBuff)
-            cvImage = np.array(grayByteArray).reshape(imageParams.height, imageParams.width)
-            qImg = QImage(cvImage.data, imageParams.height, imageParams.width, 1, QImage.Format_Mono)
-            img = Image.fromarray(np.uint8(cvImage))
-            imgPixmap = QtGui.QPixmap.fromImage(ImageQt(img))
+        imageParams = IMGCNV_SOpenParam()
+        imageParams.dataSize    = frame.contents.getImageSize(frame)
+        imageParams.height      = frame.contents.getImageHeight(frame)
+        imageParams.width       = frame.contents.getImageWidth(frame)
+        imageParams.paddingX    = frame.contents.getImagePaddingX(frame)
+        imageParams.paddingY    = frame.contents.getImagePaddingY(frame)
+        imageParams.pixelForamt = frame.contents.getImagePixelFormat(frame)
 
-            #cv2.imshow('myWindow', qImg)
-            self.viewer.setPhoto(imgPixmap)
-            #gc.collect()
-            time.sleep(0.01)
+        imageBuff = frame.contents.getImage(frame)
+        userBuff = c_buffer(b'\0', imageParams.dataSize)
+        memmove(userBuff, c_char_p(imageBuff), imageParams.dataSize)
 
-            if (cv2.waitKey(1) >= 0):
-                isGrab = False
-                break
+        frame.contents.release(frame)
 
-    def startGetFeedThread(self, text):
-        self.getFeedThread.start()
+        grayByteArray = bytearray(userBuff)
+        cvImage = np.array(grayByteArray, dtype=np.uint8).reshape(imageParams.height, imageParams.width)
+        #qImg = QImage(cvImage.data, imageParams.height, imageParams.width, 1, QImage.Format_Mono)
+        img = Image.fromarray(cvImage)
+        imgPixmap = QtGui.QPixmap.fromImage(ImageQt(img))
+
+        self.viewer.setPhoto(imgPixmap)
 
     def exit_handler(self):
         print("ENDING")
