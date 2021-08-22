@@ -99,14 +99,6 @@ class PhotoViewer(QtWidgets.QGraphicsView):
 class WorkerThread(QThread):
     grabOneFrame = pyqtSignal()
     def run(self):
-        # global isGrab
-        # isGrab = True
-        # for i in range(10):
-        #     if(isGrab == False):
-        #         print("breaking")
-        #         break
-        #     print(i)
-        #     time.sleep(1)
         global isGrab
         isGrab = True
         while isGrab:
