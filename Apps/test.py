@@ -231,7 +231,7 @@ class Demo(QtWidgets.QWidget):
         if self.viewer.dragMode()  == QtWidgets.QGraphicsView.NoDrag:
             self.editPixInfo.setText('%d, %d' % (pos.x(), pos.y()))
 
-    def initCamera():
+    def initCamera(self):
         cameraCnt, cameraList = enumCameras()
         if cameraCnt is None:
             return -1
