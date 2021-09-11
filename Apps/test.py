@@ -4,7 +4,7 @@ from PyQt5.Qt import *
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import QGraphicsDropShadowEffect, QFileDialog
 from surface.inference_model import getPredictions
-from circles.CV import find_hough_circles
+from circles.CV.find_hough_circles import find_hough_circles
 from PIL import Image
 from PIL.ImageQt import ImageQt
 import Demo
@@ -231,7 +231,7 @@ class Demo(QtWidgets.QWidget):
         if self.viewer.dragMode()  == QtWidgets.QGraphicsView.NoDrag:
             self.editPixInfo.setText('%d, %d' % (pos.x(), pos.y()))
 
-    def initCamera(self):
+    def initCamera():
         cameraCnt, cameraList = enumCameras()
         if cameraCnt is None:
             return -1
