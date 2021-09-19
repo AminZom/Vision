@@ -344,14 +344,16 @@ class Demo(QtWidgets.QWidget):
         cvImage = np.array(grayByteArray, dtype=np.uint8).reshape(imageParams.height, imageParams.width)
         #qImg = QImage(cvImage.data, imageParams.height, imageParams.width, 1, QImage.Format_Mono)
         img = Image.fromarray(cvImage)
-        print(img)
-        print(type(img))
+        # print(type(img))
         if(self.algorithmDropdown.currentIndex() == 0):         #None
             imgPixmap = QtGui.QPixmap.fromImage(ImageQt(img))
         elif(self.algorithmDropdown.currentIndex() == 1):       #Surface Detection
             imgPixmap = QtGui.QPixmap.fromImage(ImageQt(img))
         elif(self.algorithmDropdown.currentIndex() == 2):       #Circle Detection
             img_with_circles, circles_text = find_hough_circles(cvImage, 10, 200, 1, 100, 0.4)
+            # print(type(img_with_circles))
+            img_with_circles = Image.fromarray(np.uint8(img_with_circles))
+            # print(type(img_with_circles))
             imgPixmap = QtGui.QPixmap.fromImage(ImageQt(img_with_circles))
 
         self.viewer.setPhoto(imgPixmap)
