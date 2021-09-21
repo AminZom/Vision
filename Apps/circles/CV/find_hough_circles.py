@@ -38,6 +38,7 @@ num_thetas = 100
 bin_threshold = 0.4
 
 def find_hough_circles(image, r_min, r_max, delta_r, num_thetas, bin_threshold, post_process=True):
+    print("in hough")
     min_edge_threshold = 100
     max_edge_threshold = 200
     # input_img = cv2.imread(image)
@@ -130,6 +131,7 @@ def find_hough_circles(image, r_min, r_max, delta_r, num_thetas, bin_threshold, 
     if edge_image is None:
         print("Error in input image!")
 
+    print("Detecting Hough Circles Complete!")
     return output_img, out_circles
 
 # def main():

@@ -242,7 +242,7 @@ class Demo(QtWidgets.QWidget):
         nRet = openCamera(camera)
         if ( nRet != 0 ):
             print("openCamera fail.")
-            return -1;
+            return -1
             
         streamSourceInfo = GENICAM_StreamSourceInfo()
         streamSourceInfo.channelId = 0
