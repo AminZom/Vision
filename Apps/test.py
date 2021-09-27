@@ -3,7 +3,8 @@ from PyQt5.QtChart import *
 from PyQt5.Qt import *
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import QGraphicsDropShadowEffect, QFileDialog
-from inference_model import getPredictions
+from surface.inference_model import getPredictions
+from circles.CV.find_hough_circles import find_hough_circles
 from PIL import Image
 from PIL.ImageQt import ImageQt
 import Demo
@@ -343,7 +344,13 @@ class Demo(QtWidgets.QWidget):
         cvImage = np.array(grayByteArray, dtype=np.uint8).reshape(imageParams.height, imageParams.width)
         #qImg = QImage(cvImage.data, imageParams.height, imageParams.width, 1, QImage.Format_Mono)
         img = Image.fromarray(cvImage)
-        imgPixmap = QtGui.QPixmap.fromImage(ImageQt(img))
+        if(self.algorithmDropdown.currentIndex() == 0):         #None
+            imgPixmap = QtGui.QPixmap.fromImage(ImageQt(img))
+        elif(self.algorithmDropdown.currentIndex() == 1):       #Surface Detection
+            imgPixmap = QtGui.QPixmap.fromImage(ImageQt(img))
+        elif(self.algorithmDropdown.currentIndex() == 2):       #Circle Detection
+            img_with_circles, circles_text = find_hough_circles(img, 10, 200, 1, 100, 0.4, 100, 200)
+            imgPixmap = QtGui.QPixmap.fromImage(ImageQt(img_with_circles))
 
         self.viewer.setPhoto(imgPixmap)
 
