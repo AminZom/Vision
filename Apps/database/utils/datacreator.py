@@ -5,7 +5,7 @@ Dataset creator pipeline
 ################### Next to do items #######################
 # circle_radius_set -> update to a dynamic and relatable number e.g. WRT image size
 # half moon shaped (<50% filled) circles
-# dynamic color on generate_outline method
+# dynamic color on generate_outline method - 10% of the entire dataset
 # review hard and easy cases
 
 from PIL import Image, ImageDraw, ImageOps
