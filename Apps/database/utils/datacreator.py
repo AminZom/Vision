@@ -3,9 +3,7 @@ Dataset creator pipeline
 
 """
 ################### Next to do items #######################
-# circle_radius_set -> update to a dynamic and relatable number e.g. WRT image size
-# half moon shaped (<50% filled) circles
-# dynamic color on generate_outline method - 10% of the entire dataset
+# dynamic color on generate_outline method
 # review hard and easy cases
 
 from PIL import Image, ImageDraw, ImageOps
@@ -33,17 +31,16 @@ class CircleGen:
         blue = 0
         green = 0
 
-        if background_color == "light":
-            red = randint(0, 30)
-            blue = randint(0, 30)
-            green = randint(0, 30)
-        elif background_color == "dark":
-            red = randint(160, 240)
-            blue = randint(160, 240)
-            green = randint(160, 240)
+        if background_color == "dark":
+            red = randint(20, 50)
+            blue = randint(20, 50)
+            green = randint(20, 50)
+        elif background_color == "light":
+            red = randint(170, 220)
+            blue = randint(170, 220)
+            green = randint(170, 220)
 
-        image = Image.new('RGBA', (self.width, self.height), (red, blue, green))
-        image = ImageOps.grayscale(image)
+        image = Image.new('RGBA', (self.width, self.height), (red, green, blue))     
         return image
 
     def save_img(self, image):
@@ -59,8 +56,10 @@ class CircleGen:
         annotations.close()
 
     def circle_radius_set(self):
-        # update to a dynamic and relatable number
-        return randint(5, 50)
+        max_radius = (int)(self.width / 40)
+        if max_radius <= 5:
+            return 5
+        return randint(5, max_radius)
 
     def random_center_position_and_radius(self, margin):
         margin = int(margin)
@@ -82,11 +81,15 @@ class CircleGen:
                     [x, y, r] = self.random_center_position_and_radius(25)
                     if (len(circles_created) == 0 or not (
                             self.is_intersecting_some_circle_or_boundary(circles_created, [x, y, r]))):
-                        draw.ellipse((x - r, y - r, x + r, y + r), fill=str(self.generate_fill("dark")),
+                        draw.ellipse((x - r, y - r, x + r, y + r), fill=self.generate_fill("light"),
                                      width=self.generate_width(r))
                         circles_created.append([x, y, r])
                         self.save_annotation([x, y, r])
                         break
+            for z in range(3):
+                self.create_moon_shaped_circles(new_image, circles_created, "light")
+            
+            new_image = ImageOps.grayscale(new_image)
             self.save_img(new_image)
             self.current_file_count = self.current_file_count + 1
         for i in range(self.image_count_dark):
@@ -99,11 +102,14 @@ class CircleGen:
                     [x, y, r] = self.random_center_position_and_radius(25)
                     if (len(circles_created) == 0 or not (
                             self.is_intersecting_some_circle_or_boundary(circles_created, [x, y, r]))):
-                        draw.ellipse((x - r, y - r, x + r, y + r), fill=str(self.generate_fill("light")),
+                        draw.ellipse((x - r, y - r, x + r, y + r), fill=self.generate_fill("dark"),
                                      width=self.generate_width(r))
                         circles_created.append([x, y, r])
                         self.save_annotation([x, y, r])
                         break
+            for z in range(3):
+                new_image = self.create_moon_shaped_circles(new_image, circles_created, "dark")
+            new_image = ImageOps.grayscale(new_image)
             self.save_img(new_image)
             self.current_file_count = self.current_file_count + 1
 
@@ -135,15 +141,15 @@ class CircleGen:
         green = 0
 
         if contrast == "light":
-            red = randint(0, 30)
-            blue = randint(0, 30)
-            green = randint(0, 30)
+            red = randint(20, 50)
+            blue = randint(20, 50)
+            green = randint(20, 50)
         elif contrast == "dark":
-            red = randint(160, 240)
-            blue = randint(160, 240)
-            green = randint(160, 240)
+            red = randint(170, 220)
+            blue = randint(170, 220)
+            green = randint(170, 220)
 
-        return "#" + '{:X}{:X}{:X}'.format(int(red / 255), int(blue / 255), int(green / 255))
+        return (red , green , blue)
 
     def generate_width(self, radius):
         # less than 25% of the radius
@@ -153,6 +159,30 @@ class CircleGen:
         # fill outline of the circle with darker/lighter color WRT background and foreground
         return None
 
+
+    def create_moon_shaped_circles(self, image, circles_array, background_color):
+        start = randint(0, 360)
+        end = start + 150
+        fill = "white"
+        if (background_color == "dark"):
+            fill = "black"
+
+
+
+        draw = ImageDraw.Draw(image)
+        while True:
+            [x, y, r] = self.random_center_position_and_radius(25)
+            if (len(circles_array) == 0 or not (
+                self.is_intersecting_some_circle_or_boundary(circles_array, [x, y, r]))):
+                draw.ellipse((x - r, y - r, x + r, y + r), fill=self.generate_fill(background_color),
+                            width=self.generate_width(r))
+                draw.chord((x - r, y - r, x + r, y + r), start, end, fill)
+                circles_array.append([x, y, r])
+                self.save_annotation([x, y, r])
+                break
+        return image
+
+
 # main start of application for image generation
-circle_files = CircleGen(600, 400, 1, 1, "Apps/database/dataset/test")
+circle_files = CircleGen(600, 400, 5, 5, "../dataset/test")
 circle_files.draw_random_circles()

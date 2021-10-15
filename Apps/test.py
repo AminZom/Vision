@@ -5,8 +5,6 @@ from PyQt5.QtCore import *
 from PyQt5.QtWidgets import QGraphicsDropShadowEffect, QFileDialog
 from surface.inference_model import getPredictions
 from circle_detection.CV.find_hough_circles import find_hough_circles
-from PIL import Image
-from PIL.ImageQt import ImageQt
 import Demo
 from Demo import *
 
@@ -343,18 +341,21 @@ class Demo(QtWidgets.QWidget):
         grayByteArray = bytearray(userBuff)
         cvImage = np.array(grayByteArray, dtype=np.uint8).reshape(imageParams.height, imageParams.width)
         #qImg = QImage(cvImage.data, imageParams.height, imageParams.width, 1, QImage.Format_Mono)
-        img = Image.fromarray(cvImage)
+        cv2.imwrite('test.jpg', cvImage)
+        img = cv2.imread('test.jpg')
         # print(type(img))
         if(self.algorithmDropdown.currentIndex() == 0):         #None
-            imgPixmap = QtGui.QPixmap.fromImage(ImageQt(img))
+            imgPixmap = QtGui.QPixmap.fromImage(img)
         elif(self.algorithmDropdown.currentIndex() == 1):       #Surface Detection
-            imgPixmap = QtGui.QPixmap.fromImage(ImageQt(img))
+            imgPixmap = QtGui.QPixmap.fromImage(img)
         elif(self.algorithmDropdown.currentIndex() == 2):       #Circle Detection
-            img_with_circles, circles_text = find_hough_circles(cvImage, 10, 200, 1, 100, 0.4)
-            # print(type(img_with_circles))
-            img_with_circles = Image.fromarray(np.uint8(img_with_circles))
-            # print(type(img_with_circles))
-            imgPixmap = QtGui.QPixmap.fromImage(ImageQt(img_with_circles))
+            imgPixmap = QtGui.QPixmap.fromImage(img)
+
+            # The following needs to be updated by Sophia and Amin's work on AI and GUI Customization
+
+            # img_with_circles, circles_text = find_hough_circles(cvImage, 10, 200, 1, 100, 0.4)
+            # img_with_circles = Image.fromarray(np.uint8(img_with_circles))
+            # imgPixmap = QtGui.QPixmap.fromImage(ImageQt(img_with_circles))
 
         self.viewer.setPhoto(imgPixmap)
 
