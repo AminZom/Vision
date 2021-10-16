@@ -17,6 +17,7 @@ import gc
 import atexit
 import ctypes
 import time
+import json
 
 #preds = getPredictions()
 camera = None
@@ -242,7 +243,7 @@ class Demo(QtWidgets.QWidget):
         nRet = openCamera(camera)
         if ( nRet != 0 ):
             print("openCamera fail.")
-            return -1;
+            return -1
             
         streamSourceInfo = GENICAM_StreamSourceInfo()
         streamSourceInfo.channelId = 0
@@ -344,12 +345,16 @@ class Demo(QtWidgets.QWidget):
         cvImage = np.array(grayByteArray, dtype=np.uint8).reshape(imageParams.height, imageParams.width)
         #qImg = QImage(cvImage.data, imageParams.height, imageParams.width, 1, QImage.Format_Mono)
         img = Image.fromarray(cvImage)
+        # print(type(img))
         if(self.algorithmDropdown.currentIndex() == 0):         #None
             imgPixmap = QtGui.QPixmap.fromImage(ImageQt(img))
         elif(self.algorithmDropdown.currentIndex() == 1):       #Surface Detection
             imgPixmap = QtGui.QPixmap.fromImage(ImageQt(img))
         elif(self.algorithmDropdown.currentIndex() == 2):       #Circle Detection
-            img_with_circles, circles_text = find_hough_circles(img, 10, 200, 1, 100, 0.4, 100, 200)
+            img_with_circles, circles_text = find_hough_circles(cvImage, 10, 200, 1, 100, 0.4)
+            # print(type(img_with_circles))
+            img_with_circles = Image.fromarray(np.uint8(img_with_circles))
+            # print(type(img_with_circles))
             imgPixmap = QtGui.QPixmap.fromImage(ImageQt(img_with_circles))
 
         self.viewer.setPhoto(imgPixmap)
@@ -480,7 +485,16 @@ class Demo(QtWidgets.QWidget):
         print("save " + fileName + " success.")
         print("save bmp time: " + str(datetime.datetime.now()))
 
-        self.viewer.setPhoto(QtGui.QPixmap(fileName))
+        painter = QtGui.QPainter(self)
+        pen = QtGui.QPen(Qt.yellow, 2)
+        painter.drawPixmap(QtGui.QPixmap(fileName))
+        painter.setPen(pen)
+        with open('circles.json') as f:
+            data = json.load(f)
+            for circle in data:
+                painter.drawEllipse(circle["x"], circle["y"], circle["radius"], circle["radius"])
+
+        self.viewer.setPhoto(painter)
         preds = getPredictions(fileName)
         self.setPredictions(self, preds)
         self.hintLabel.setVisible(True)

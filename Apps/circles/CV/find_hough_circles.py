@@ -31,11 +31,24 @@ import math
 import matplotlib.pyplot as plt
 from collections import defaultdict
 
+r_min = 10
+r_max = 200
+delta_r = 1
+num_thetas = 100
+bin_threshold = 0.4
 
-def find_hough_circles(image, edge_image, r_min, r_max, delta_r, num_thetas, bin_threshold, post_process=True):
-    # image size
+def find_hough_circles(image, r_min, r_max, delta_r, num_thetas, bin_threshold, post_process=True):
+    print("in hough")
+    min_edge_threshold = 100
+    max_edge_threshold = 200
+    # input_img = cv2.imread(image)
+    # # Edge detection on the input image
+    # edge_image = cv2.cvtColor(np.array(image), cv2.COLOR_BGR2GRAY)
+    # ret, edge_image = cv2.threshold(edge_image, 120, 255, cv2.THRESH_BINARY_INV)
+    edge_image = cv2.Canny(image, min_edge_threshold, max_edge_threshold)
+
     img_height, img_width = edge_image.shape[:2]
-
+        
     # R and Theta ranges
     dtheta = int(360 / num_thetas)
 
@@ -75,7 +88,7 @@ def find_hough_circles(image, edge_image, r_min, r_max, delta_r, num_thetas, bin
                     accumulator[(x_center, y_center, r)] += 1  # vote for current candidate
 
     # Output image with detected lines drawn
-    output_img = image.copy()
+    output_img = np.array(image).copy()
     # Output list of detected circles. A single circle would be a tuple of (x,y,r,threshold)
     out_circles = []
 
@@ -105,26 +118,24 @@ def find_hough_circles(image, edge_image, r_min, r_max, delta_r, num_thetas, bin
     for x, y, r, v in out_circles:
         output_img = cv2.circle(output_img, (x, y), r, (0, 255, 0), 2)
 
+    circle_file = open('circles_list.txt', 'w')
+    circle_file.write('x ,\t y,\t Radius,\t Threshold \n')
+    for i in range(len(out_circles)):
+        circle_file.write(
+            str(out_circles[i][0]) + ' , ' + str(out_circles[i][1]) + ' , ' + str(out_circles[i][2]) + ' , ' + str(
+                out_circles[i][3]) + '\n')
+    circle_file.close()
+
+    if output_img is not None:
+        cv2.imwrite("circles_img.png", output_img)
+    if edge_image is None:
+        print("Error in input image!")
+
+    print("Detecting Hough Circles Complete!")
     return output_img, out_circles
 
-
-def main():
-    parser = argparse.ArgumentParser(description='Find Hough circles from the image.')
-    parser.add_argument('image_path', type=str, help='Full path of the input image.')
-    parser.add_argument('--r_min', type=float, help='Min radius circle to detect. Default is 5.')
-    parser.add_argument('--r_max', type=float, help='Max radius circle to detect.')
-    parser.add_argument('--delta_r', type=float, help='Delta change in radius from r_min to r_max. Default is 1.')
-    parser.add_argument('--num_thetas', type=float, help='Number of steps for theta from 0 to 2PI. Default is 100.')
-    parser.add_argument('--bin_threshold', type=int,
-                        help='Thresholding value to shortlist candidate for circle. Default is 0.4 i.e. 40%.')
-    parser.add_argument('--min_edge_threshold', type=int,
-                        help='Minimum threshold value for edge detection. Default 100.')
-    parser.add_argument('--max_edge_threshold', type=int,
-                        help='Maximum threshold value for edge detection. Default 200.')
-
-    args = parser.parse_args()
-
-    img_path = args.image_path
+# def main():
+    img_path = None
     r_min = 10
     r_max = 200
     delta_r = 1
@@ -132,27 +143,6 @@ def main():
     bin_threshold = 0.4
     min_edge_threshold = 100
     max_edge_threshold = 200
-
-    if args.r_min:
-        r_min = args.r_min
-
-    if args.r_max:
-        r_max = args.r_max
-
-    if args.delta_r:
-        delta_r = args.delta_r
-
-    if args.num_thetas:
-        num_thetas = args.num_thetas
-
-    if args.bin_threshold:
-        bin_threshold = args.bin_threshold
-
-    if args.min_edge_threshold:
-        min_edge_threshold = args.min_edge_threshold
-
-    if args.max_edge_threshold:
-        max_edge_threshold = args.max_edge_threshold
 
     input_img = cv2.imread(img_path)
 
@@ -190,4 +180,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    find_hough_circles()
