@@ -344,13 +344,16 @@ class Demo(QtWidgets.QWidget):
         #qImg = QImage(cvImage.data, imageParams.height, imageParams.width, 1, QImage.Format_Mono)
         cv2.imwrite('test.jpg', cvImage)
         img = cv2.imread('test.jpg')
+        height, width, channel = img.shape
+        bytesPerLine = 3 * width
+        qImg = QImage(img.data, width, height, bytesPerLine, QImage.Format_RGB888).rgbSwapped()
         # print(type(img))
         if(self.algorithmDropdown.currentIndex() == 0):         #None
-            imgPixmap = QtGui.QPixmap.fromImage(img)
+            imgPixmap = QtGui.QPixmap.fromImage(qImg)
         elif(self.algorithmDropdown.currentIndex() == 1):       #Surface Detection
-            imgPixmap = QtGui.QPixmap.fromImage(img)
+            imgPixmap = QtGui.QPixmap.fromImage(qImg)
         elif(self.algorithmDropdown.currentIndex() == 2):       #Circle Detection
-            imgPixmap = QtGui.QPixmap.fromImage(img)
+            imgPixmap = QtGui.QPixmap.fromImage(qImg)
 
             # The following needs to be updated by Sophia and Amin's work on AI and GUI Customization
 
@@ -450,7 +453,7 @@ class Demo(QtWidgets.QWidget):
         bmpInfoHeader.biClrUsed = 0
         bmpInfoHeader.biClrImportant = 0    
         
-        fileName = '.\image\image.bmp'
+        fileName = 'image.bmp'
         imageFile = open(fileName, 'wb+') 
         
         imageFile.write(struct.pack('H', bmpFileHeader.bfType))
@@ -486,18 +489,20 @@ class Demo(QtWidgets.QWidget):
         print("save " + fileName + " success.")
         print("save bmp time: " + str(datetime.datetime.now()))
 
-        painter = QtGui.QPainter(self)
-        pen = QtGui.QPen(Qt.yellow, 2)
-        painter.drawPixmap(QtGui.QPixmap(fileName))
+        pixmap = QtGui.QPixmap(fileName)
+        painter = QtGui.QPainter(pixmap)
+        pen = QtGui.QPen(Qt.red, 10)
+
+        # painter.drawPixmap(0, 0, pixmap)
         painter.setPen(pen)
         with open('circles.json') as f:
             data = json.load(f)
             for circle in data:
                 painter.drawEllipse(circle["x"], circle["y"], circle["radius"], circle["radius"])
-
-        self.viewer.setPhoto(painter)
-        preds = getPredictions(fileName)
-        self.setPredictions(self, preds)
+        painter.end()
+        self.viewer.setPhoto(pixmap)
+        # preds = getPredictions(fileName)
+        # self.setPredictions(self, preds)
         self.hintLabel.setVisible(True)
 
     nRet = initCamera()

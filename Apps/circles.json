@@ -6,21 +6,21 @@
         "confidence": 87
     },
     {
-        "x": 300,
-        "y": 350,
+        "x": 1300,
+        "y": 1350,
         "radius": 20,
         "confidence": 82
     },
     {
-        "x": 450,
-        "y": 200,
-        "radius": 60,
+        "x": 2450,
+        "y": 1200,
+        "radius": 160,
         "confidence": 92
     },
     {
-        "x": 100,
+        "x": 2900,
         "y": 310,
-        "radius": 35,
+        "radius": 235,
         "confidence": 98
     }
 ]
