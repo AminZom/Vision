@@ -2,67 +2,26 @@
 
 Vision inspection software with AI.
 
-Require Python 3.7.9 with following libraries in 'site-packages':
+-----
+Similar Companies are:
+-
 
- - absl
- - altgraph
- - astor
- - astunparse
- - cachetools
- - certifi
- - chardet
- - click
- - cv2
- - docs
- - flatbuffers
- - future
- - gast
- - google
- - google_auth_oauthlib
- - grpc
- - h5py
- - idna
- - importlib_metadata
- - keras
- - keras_applications
- - keras_preprocessing
- - libfuturize
- - libpasteurize
- - markdown
- - numpy
- - oauthlib
- - opt_einsum
- - ordlookup
- - packaging
- - past
- - pasta
- - PIL
- - pip
- - pkg_resources
- - pyasn1
- - pyasn1_modules
- - PyInstaller
- - PyQt5
- - PyQt5-5.15.1.dist-info
- - pyqt5_plugins
- - pyqt5_tools
- - qt5_applications
- - qt5_tools
- - QtDesigner
- - requests
- - requests_oauthlib
- - rsa
- - scipy
- - setuptools
- - sipbuild
- - tensorboard
- - tensorboard_plugin_wit
- - tensorflow
- - tensorflow_estimator
- - toml
- - urllib3
- - werkzeug
- - wheel
- - win32ctypes
- - wrapt
- - yaml
+Home - Landing AI: https://landing.ai/
+
+Vision AI | Derive Image Insights via ML  |  Cloud Vision API (google.com): https://cloud.google.com/vision
+
+Neurala | Vision AI for Inspections: https://www.neurala.com/
+
+Axom - Automatic Visual Inspection: http://www.axom.tech/
+
+------
+DXF Creation From Images
+- 
+Convert an Image to DXF — using Scan2CAD paper
+
+https://ezdxf.readthedocs.io/_/downloads/en/stable/pdf/
+
+Papers
+--
+Real life - circle detection approach: 
+https://arxiv.org/ftp/arxiv/papers/1405/1405.5531.pdf
